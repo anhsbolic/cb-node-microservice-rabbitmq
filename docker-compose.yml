@@ -1,0 +1,85 @@
+version: '3.7'
+
+volumes:
+  cb_ms_mongo_data:
+  cb_ms_redis:
+    driver: local
+  cb_ms_billing_service_api_data:
+  cb_ms_invoice_service_api_data:
+  cb_ms_product_service_api_data:
+  cb_ms_purchase_order_service_api_data:
+
+services:
+  cb_ms_mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    container_name: cb_ms_mongo
+    volumes:
+      - cb_ms_mongo_data:/data/db
+  cb_ms_redis:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    container_name: cb_ms_redis
+    command: redis-server --save 20 1 --loglevel warning --requirepass fuaGUCIVUI678597yHUIHbiivu97668
+    volumes: 
+      - cb_ms_redis:/data
+  cb_ms_billing_service_api:
+    build:
+      context: ./billing-service-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8001:8001"
+    container_name: cb_ms_billing_service_api_data
+    links:
+      - cb_ms_mongo
+    depends_on:
+      - cb_ms_mongo
+      - cb_ms_redis
+    volumes:
+      - cb_ms_billing_service_api_data:/usr/src/app
+  cb_ms_invoice_service_api:
+    build:
+      context: ./invoice-service-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8002:8002"
+    container_name: cb_ms_invoice_service_api_data
+    links:
+      - cb_ms_mongo
+    depends_on:
+      - cb_ms_mongo
+      - cb_ms_redis
+    volumes:
+      - cb_ms_invoice_service_api_data:/usr/src/app
+  cb_ms_product_service_api:
+    build:
+      context: ./product-service-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8003:8003"
+    container_name: cb_ms_product_service_api_data
+    links:
+      - cb_ms_mongo
+    depends_on:
+      - cb_ms_mongo
+      - cb_ms_redis
+    volumes:
+      - cb_ms_product_service_api_data:/usr/src/app
+  cb_ms_purchase_order_service_api:
+    build:
+      context: ./purchase-order-service-api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8004:8004"
+    container_name: cb_ms_purchase_order_service_api_data
+    links:
+      - cb_ms_mongo
+    depends_on:
+      - cb_ms_mongo
+      - cb_ms_redis
+    volumes:
+      - cb_ms_purchase_order_service_api_data:/usr/src/app
+  

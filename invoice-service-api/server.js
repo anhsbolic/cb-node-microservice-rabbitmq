@@ -1,11 +1,17 @@
 const express = require('express');
+const amqp = require('amqplib');
+
 require('dotenv').config();
 
+const config = require('./config');
 const db = require('./db');
 const respond = require('./helper/respond');
 
 // router
 const invoiceRouter = require('./app/invoice/router');
+
+// rabbitmq consumer
+const invoiceRabbitMqConsumer = require('./app/invoice/rabbitmqConsumer');
 
 // app
 const port = process.env.PORT || 3000;
@@ -43,6 +49,18 @@ app.use(function (err, req, res, next) {
   console.log(err);
   respond.responseError(res);
 });
+
+// rabbit mq consumer
+amqp
+  .connect('amqp://host.docker.internal')
+  .then((conn) => {
+    console.log('Connection established to rabbitmq');
+    invoiceRabbitMqConsumer.runConsumers(conn);
+  })
+  .catch(function (err) {
+    console.log('Connection to rabbitmq Error');
+    console.log(err);
+  });
 
 app.listen(port, () => {
   console.log(`Server listening on the port : ${port}`);

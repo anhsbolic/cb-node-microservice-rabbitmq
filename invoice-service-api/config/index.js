@@ -6,4 +6,5 @@ dotenv.config();
 module.exports = {
   rootPath: path.resolve(__dirname, '..'),
   nodeEnv: process.env.NODE_ENV,
+  billingServiceApi: process.env.BILLING_SERVICE_API,
 };

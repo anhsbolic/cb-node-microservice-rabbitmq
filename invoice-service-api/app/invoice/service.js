@@ -1,10 +1,11 @@
+const axios = require('axios');
 const moment = require('moment');
 const Joi = require('joi');
+const config = require('../../config');
 const error = require('../../helper/error');
 const invoiceCache = require('./cache');
 const invoiceHelper = require('./helper');
 const invoiceRepository = require('./repository');
-const billingRepository = require('../billing/repository');
 
 /**
  * Get List of Invoice with Filter & Pagination
@@ -34,7 +35,13 @@ const create = async (data) => {
   }
 
   // get billing
-  let billing = await billingRepository.findById(data.billing_id);
+  let billing;
+  let billingResponse = await axios.get(
+    `${config.billingServiceApi}/billing/${data.billing_id}`
+  );
+  if (billingResponse && billingResponse.data && billingResponse.data.success) {
+    billing = billingResponse.data.data;
+  }
   if (!billing) {
     error.throwBadRequest('Invalid Billing');
   }
@@ -61,13 +68,21 @@ const create = async (data) => {
     error.throwInternalServerError('Create Invoice Fail');
   }
 
-  // update invoiced flag on billing
+  // update update invoiced flag on billing
+  let billingUpdated = false;
   let updateBillingData = { flag_invoiced: true };
-  let updatedBilling = await billingRepository.update(
-    billing._id,
+  let updateBillingResponse = await axios.post(
+    `${config.billingServiceApi}/billing/${data.billing_id}/invoiced`,
     updateBillingData
   );
-  if (!updatedBilling) {
+  if (
+    updateBillingResponse &&
+    updateBillingResponse.data &&
+    updateBillingResponse.data.success
+  ) {
+    billingUpdated = true;
+  }
+  if (!billingUpdated) {
     await invoiceRepository.deleteOne(createdInvoice._id);
     error.throwInternalServerError('Create Invoice Fail');
   }

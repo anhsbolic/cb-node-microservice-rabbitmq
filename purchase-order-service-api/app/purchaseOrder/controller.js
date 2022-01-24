@@ -83,10 +83,32 @@ const deleteOne = async (req, res) => {
   }
 };
 
+/**
+ * PurchaseOrder API : Update Status Purchase Order
+ * @param {Object} req express request object
+ * @param {Object} res express response object
+ */
+const updateStatus = async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const result = await purchaseOrderService.updateStatus(id, req.body);
+    return respond.responseSuccess(
+      res,
+      'Purchase Order Status Updated',
+      result
+    );
+  } catch (e) {
+    logger.info(e);
+    return respond.responseError(res, e.statusCode, e.message);
+  }
+};
+
 module.exports = {
   index,
   create,
   detail,
   update,
   deleteOne,
+  updateStatus,
 };

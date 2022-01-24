@@ -5,9 +5,6 @@ const db = require('./db');
 const respond = require('./helper/respond');
 
 // router
-const billingRouter = require('./app/billing/router');
-const invoiceRouter = require('./app/invoice/router');
-const productRouter = require('./app/product/router');
 const purchaseOrderRouter = require('./app/purchaseOrder/router');
 
 // app
@@ -34,9 +31,6 @@ db.on('reconnected', function () {
 });
 
 // api routes
-app.use('/billing', billingRouter);
-app.use('/invoice', invoiceRouter);
-app.use('/product', productRouter);
 app.use('/purchase-order', purchaseOrderRouter);
 
 // catch 404 and forward to error handler

@@ -1,10 +1,11 @@
+const axios = require('axios');
 const moment = require('moment');
 const Joi = require('joi');
 const error = require('../../helper/error');
+const config = require('../../config');
 const billingCache = require('./cache');
 const billingHelper = require('./helper');
 const billingRepository = require('./repository');
-const purchaseOrderRepository = require('../purchaseOrder/repository');
 
 /**
  * Get List of Billing with Filter & Pagination
@@ -35,7 +36,13 @@ const create = async (data) => {
   }
 
   // get purchase order
-  let purchaseOrder = await purchaseOrderRepository.findById(data.po_id);
+  let purchaseOrder;
+  let poResponse = await axios.get(
+    `${config.poServiceApi}/purchase-order/${data.po_id}`
+  );
+  if (poResponse && poResponse.data && poResponse.data.success) {
+    purchaseOrder = poResponse.data.data;
+  }
   if (!purchaseOrder) {
     error.throwBadRequest('Invalid Purchase Order');
   }
@@ -88,12 +95,20 @@ const create = async (data) => {
   }
 
   // update status po to billed
+  let poUpdated = false;
   let updatePoData = { status: 'billed' };
-  let updatedPo = await purchaseOrderRepository.update(
-    purchaseOrder._id,
+  let updatePoResponse = await axios.post(
+    `${config.poServiceApi}/purchase-order/${data.po_id}/status`,
     updatePoData
   );
-  if (!updatedPo) {
+  if (
+    updatePoResponse &&
+    updatePoResponse.data &&
+    updatePoResponse.data.success
+  ) {
+    poUpdated = true;
+  }
+  if (!poUpdated) {
     await billingRepository.deleteOne(createdBilling._id);
     error.throwInternalServerError('Create Billing Fail');
   }
@@ -265,6 +280,35 @@ const cancelBilling = async (id, data) => {
   return updatedBilling;
 };
 
+/**
+ * Invoiced Billing
+ * @param {String} id billing id
+ * @param {Object} data all data required to create a billing
+ */
+const invoicedBilling = async (id, data) => {
+  let billing = await billingRepository.findById(id);
+  if (!billing) {
+    error.throwNotFound();
+  }
+
+  // data
+  let updatedData = {
+    flag_invoiced: true,
+  };
+
+  // update
+  let updatedBilling = await billingRepository.update(billing._id, updatedData);
+  if (!updatedBilling) {
+    error.throwInternalServerError('Update Billing Fail');
+  }
+
+  // delete data from redis cache
+  await billingCache.deleteBillingDetail(id);
+
+  // result
+  return updatedBilling;
+};
+
 module.exports = {
   index,
   create,
@@ -273,4 +317,5 @@ module.exports = {
   deleteOne,
   payBilling,
   cancelBilling,
+  invoicedBilling,
 };

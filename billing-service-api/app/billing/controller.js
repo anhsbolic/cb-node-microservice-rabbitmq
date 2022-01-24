@@ -117,6 +117,23 @@ const cancelBilling = async (req, res) => {
   }
 };
 
+/**
+ * Billing API : Invoiced Billing
+ * @param {Object} req express request object
+ * @param {Object} res express response object
+ */
+const invoicedBilling = async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const result = await billingService.invoicedBilling(id, req.body);
+    return respond.responseSuccess(res, 'Billing Invoiced', result);
+  } catch (e) {
+    logger.info(e);
+    return respond.responseError(res, e.statusCode, e.message);
+  }
+};
+
 module.exports = {
   index,
   create,
@@ -125,4 +142,5 @@ module.exports = {
   deleteOne,
   payBilling,
   cancelBilling,
+  invoicedBilling,
 };

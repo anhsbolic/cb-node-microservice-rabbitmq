@@ -1,8 +1,9 @@
 const axios = require('axios');
 const moment = require('moment');
 const Joi = require('joi');
-const error = require('../../helper/error');
 const config = require('../../config');
+const error = require('../../helper/error');
+const rabbitmq = require('../../helper/rabbitmq');
 const billingCache = require('./cache');
 const billingHelper = require('./helper');
 const billingRepository = require('./repository');
@@ -112,6 +113,13 @@ const create = async (data) => {
     await billingRepository.deleteOne(createdBilling._id);
     error.throwInternalServerError('Create Billing Fail');
   }
+
+  // publish created billing to rabbitmq
+  // - invoice will consume, then create new invoice from this billing
+  let msgData = {
+    billing_id: billing._id,
+  };
+  await rabbitmq.publish(rabbitmq.BILLING_CREATE_QUEUE, msgData);
 
   // result
   return createdBilling;

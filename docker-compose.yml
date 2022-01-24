@@ -4,10 +4,16 @@ volumes:
   cb_ms_mongo_data:
   cb_ms_redis:
     driver: local
+  cb_ms_rabbit_mq_data:
+  cb_ms_rabbit_mq_log:
   cb_ms_billing_service_api_data:
   cb_ms_invoice_service_api_data:
   cb_ms_product_service_api_data:
   cb_ms_purchase_order_service_api_data:
+
+networks:
+  cb_ms_network:
+    driver: bridge
 
 services:
   cb_ms_mongo:
@@ -17,6 +23,8 @@ services:
     container_name: cb_ms_mongo
     volumes:
       - cb_ms_mongo_data:/data/db
+    networks:
+      - cb_ms_network
   cb_ms_redis:
     image: redis:6.2-alpine
     restart: always
@@ -26,6 +34,19 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass fuaGUCIVUI678597yHUIHbiivu97668
     volumes: 
       - cb_ms_redis:/data
+    networks:
+      - cb_ms_network
+  cb_ms_rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: cb_ms_rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - cb_ms_rabbit_mq_data:/var/lib/rabbitmq/
+      - cb_ms_rabbit_mq_log:/var/log/rabbitmq
+    networks:
+      - cb_ms_network
   cb_ms_billing_service_api:
     build:
       context: ./billing-service-api
@@ -33,13 +54,14 @@ services:
     ports:
       - "8001:8001"
     container_name: cb_ms_billing_service_api
-    links:
-      - cb_ms_mongo
     depends_on:
       - cb_ms_mongo
       - cb_ms_redis
+      - cb_ms_rabbitmq
     volumes:
       - cb_ms_billing_service_api_data:/usr/src/app
+    networks:
+      - cb_ms_network
   cb_ms_invoice_service_api:
     build:
       context: ./invoice-service-api
@@ -47,13 +69,14 @@ services:
     ports:
       - "8002:8002"
     container_name: cb_ms_invoice_service_api
-    links:
-      - cb_ms_mongo
     depends_on:
       - cb_ms_mongo
       - cb_ms_redis
+      - cb_ms_rabbitmq
     volumes:
       - cb_ms_invoice_service_api_data:/usr/src/app
+    networks:
+      - cb_ms_network
   cb_ms_product_service_api:
     build:
       context: ./product-service-api
@@ -61,13 +84,14 @@ services:
     ports:
       - "8003:8003"
     container_name: cb_ms_product_service_api
-    links:
-      - cb_ms_mongo
     depends_on:
       - cb_ms_mongo
       - cb_ms_redis
+      - cb_ms_rabbitmq
     volumes:
       - cb_ms_product_service_api_data:/usr/src/app
+    networks:
+      - cb_ms_network
   cb_ms_purchase_order_service_api:
     build:
       context: ./purchase-order-service-api
@@ -75,11 +99,12 @@ services:
     ports:
       - "8004:8004"
     container_name: cb_ms_purchase_order_service_api
-    links:
-      - cb_ms_mongo
     depends_on:
       - cb_ms_mongo
       - cb_ms_redis
+      - cb_ms_rabbitmq
     volumes:
       - cb_ms_purchase_order_service_api_data:/usr/src/app
+    networks:
+      - cb_ms_network
   

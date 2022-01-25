@@ -1,4 +1,4 @@
-# cb-node-api-mongo-redis
+# cb-node-microservice-rabbitmq : product-service-api
 
 ## Getting Started
 

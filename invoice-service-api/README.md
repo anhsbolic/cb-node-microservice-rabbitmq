@@ -1,4 +1,4 @@
-# cb-node-api-mongo-redis
+# cb-node-microservice-rabbitmq : invoice-service-api
 
 ## Getting Started
 

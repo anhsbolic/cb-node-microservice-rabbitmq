@@ -28,6 +28,7 @@ const create = async (data) => {
     po_id: Joi.string().required(),
     billing_date: Joi.date().required(),
     due_date: Joi.date().min(Joi.ref('billing_date')).required(),
+    auto_create_invoice: Joi.boolean().default(false),
   });
 
   try {
@@ -114,12 +115,21 @@ const create = async (data) => {
     error.throwInternalServerError('Create Billing Fail');
   }
 
+  // create invoice when auto_create_invoice flag true
+  if (data.auto_create_invoice && data.auto_create_invoice === true) {
+    let createInvoiceData = {
+      billing_id: createdBilling._id.toString(),
+      invoice_date: moment().utc().format('YYYY-MM-DD'),
+    };
+    await axios.post(`${config.invoiceServiceApi}/invoice`, createInvoiceData);
+  }
+
   // publish created billing to rabbitmq
   // - invoice will consume, then create new invoice from this billing
-  let msgData = {
-    billing_id: billing._id,
-  };
-  await rabbitmq.publish(rabbitmq.BILLING_CREATE_QUEUE, msgData);
+  // let msgData = {
+  //   billing_id: billing._id,
+  // };
+  // await rabbitmq.publish(rabbitmq.BILLING_CREATE_QUEUE, msgData);
 
   // result
   return createdBilling;

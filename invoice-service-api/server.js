@@ -51,17 +51,19 @@ app.use(function (err, req, res, next) {
 });
 
 // rabbit mq consumer
-amqp
-  .connect('amqp://host.docker.internal')
-  .then((conn) => {
-    console.log('Connection established to rabbitmq');
-    invoiceRabbitMqConsumer.runConsumers(conn);
-  })
-  .catch(function (err) {
-    console.log('Connection to rabbitmq Error');
-    console.log(err);
-  });
+setTimeout(() => {
+  amqp
+    .connect('amqp://host.docker.internal')
+    .then((conn) => {
+      console.log('Connection established to rabbitmq');
+      invoiceRabbitMqConsumer.runConsumers(conn);
+    })
+    .catch(function (err) {
+      console.log('Connection to rabbitmq Error');
+      console.log(err);
+    });
 
-app.listen(port, () => {
-  console.log(`Server listening on the port : ${port}`);
-});
+  app.listen(port, () => {
+    console.log(`Server listening on the port : ${port}`);
+  });
+}, 5000);

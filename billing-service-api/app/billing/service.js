@@ -116,20 +116,25 @@ const create = async (data) => {
   }
 
   // create invoice when auto_create_invoice flag true
+  // if (data.auto_create_invoice && data.auto_create_invoice === true) {
+  //   let createInvoiceData = {
+  //     billing_id: createdBilling._id.toString(),
+  //     invoice_date: moment().utc().format('YYYY-MM-DD'),
+  //   };
+  //   await axios.post(`${config.invoiceServiceApi}/invoice`, createInvoiceData);
+  // }
+
+  // create invoice when auto_create_invoice flag true
   if (data.auto_create_invoice && data.auto_create_invoice === true) {
-    let createInvoiceData = {
+    // publish created billing to rabbitmq
+    // - invoice will consume, then create new invoice from this billing
+    let msgData = {
       billing_id: createdBilling._id.toString(),
       invoice_date: moment().utc().format('YYYY-MM-DD'),
     };
-    await axios.post(`${config.invoiceServiceApi}/invoice`, createInvoiceData);
-  }
 
-  // publish created billing to rabbitmq
-  // - invoice will consume, then create new invoice from this billing
-  // let msgData = {
-  //   billing_id: billing._id,
-  // };
-  // await rabbitmq.publish(rabbitmq.BILLING_CREATE_QUEUE, msgData);
+    await rabbitmq.publish(rabbitmq.BILLING_CREATE_QUEUE, msgData);
+  }
 
   // result
   return createdBilling;

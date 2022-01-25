@@ -1,8 +1,6 @@
 const express = require('express');
 const amqp = require('amqplib');
-
 require('dotenv').config();
-
 const config = require('./config');
 const db = require('./db');
 const respond = require('./helper/respond');
@@ -53,7 +51,7 @@ app.use(function (err, req, res, next) {
 // rabbit mq consumer
 setTimeout(() => {
   amqp
-    .connect('amqp://host.docker.internal')
+    .connect(config.rabbitMqConnString)
     .then((conn) => {
       console.log('Connection established to rabbitmq');
       invoiceRabbitMqConsumer.runConsumers(conn);
